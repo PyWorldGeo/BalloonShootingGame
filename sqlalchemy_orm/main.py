@@ -1,5 +1,5 @@
 #An ORM, or Object Relational Mapper, is a piece of software designed to translate between the data representations used by databases and those used in object-oriented programming.
-from sqlalchemy import create_engine, text
+from sqlalchemy import create_engine, text, or_, and_, not_
 from sqlalchemy.orm import sessionmaker, joinedload, declarative_base, relationship
 from sqlalchemy import Column, Integer, String, Boolean, CHAR, ForeignKey
 
@@ -56,16 +56,67 @@ session.add(person2)
 session.add(person3)
 session.commit()
 
+human1 = session.query(Person).all()[0]
+print(human1.firstname)
+print(human1.ssn)
+
+human1 = session.query(Person).filter_by(ssn=12342).one_or_none() #returns error if not unique
+print(human1.firstname)
+
+human1 = session.query(Person).filter_by(ssn=12342).first()
+print(human1.firstname)
+human1.firstname = "Benjamin"
+session.commit()
+
+session.delete(human1)
+session.commit()
+
+all_persons = session.query(Person).order_by(Person.age).all()
+for info in all_persons:
+    print(info)
+
+all_persons = session.query(Person).order_by(Person.age.desc()).all()
+for info in all_persons:
+    print(info)
+
+
+all_persons = session.query(Person).order_by(Person.age, Person.firstname).all()
+for info in all_persons:
+    print(info)
+
 # session.add_all([person1, person2, person3])
 # session.commit()
 
 result = session.query(Person).all()
 print(result)
 
-result1 = session.query(Person).filter(Person.age == 28)
+result1 = session.query(Person).filter(Person.age == 28).all()
 for r in result1:
     print(r)
 
+result1 = session.query(Person).filter_by(age=28).all()
+for r in result1:
+    print(r)
+
+result1 = session.query(Person).where(Person.age >= 28, Person.age <= 30).all() #and case
+for r in result1:
+    print(r)
+
+result1 = session.query(Person).where(or_(Person.age >= 28, Person.age <= 15)).all() #and case
+for r in result1:
+    print(r)
+
+result1 = session.query(Person).where(and_(Person.age >= 28, Person.age <= 15)).all() #and case
+for r in result1:
+    print(r)
+
+result1 = session.query(Person).where((Person.age >= 28) | (Person.age <= 15)).all() #and case
+for r in result1:
+    print(r)
+
+result1 = session.query(Person).where(not_(Person.age >= 28) & (Person.age <= 15)).all() #and case
+for r in result1:
+    print(r)
 
 result2 = session.query(Person).filter(Person.firstname.like("%e"))
 for r in result2:
@@ -124,9 +175,16 @@ for row in result:
 # session.commit()
 
 
+#group_by
+people = session.query(Person).group_by(Person.age).all()
+print(people)
 
+people = session.query(Person.age).group_by(Person.age).all()
+print(people)
 
-
+from sqlalchemy import func
+people = session.query(Person.age, func.count(Person.ssn)).group_by(Person.age).all()
+print(people)
 
 
 
